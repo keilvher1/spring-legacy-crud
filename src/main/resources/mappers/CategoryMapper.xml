@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.handong.internationalmedia.dao.CategoryDao">
+
+    <!-- Result Map -->
+    <resultMap id="CategoryResultMap" type="Category">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="displayOrder" column="display_order"/>
+        <result property="isActive" column="is_active"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <resultMap id="CategoryWithArticleCountResultMap" type="Category">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="displayOrder" column="display_order"/>
+        <result property="isActive" column="is_active"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="articleCount" column="article_count"/>
+    </resultMap>
+
+    <!-- SQL Fragments -->
+    <sql id="categoryColumns">
+        id, name, description, display_order, is_active, created_at, updated_at
+    </sql>
+
+    <sql id="categoryInsertColumns">
+        name, description, display_order, is_active, created_at, updated_at
+    </sql>
+
+    <!-- Create -->
+    <insert id="insertCategory" parameterType="Category" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO categories (<include refid="categoryInsertColumns"/>)
+        VALUES (#{name}, #{description}, #{displayOrder}, #{isActive}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <!-- Read -->
+    <select id="selectCategoryById" parameterType="Long" resultMap="CategoryResultMap">
+        SELECT <include refid="categoryColumns"/>
+        FROM categories
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectCategoryByName" parameterType="String" resultMap="CategoryResultMap">
+        SELECT <include refid="categoryColumns"/>
+        FROM categories
+        WHERE name = #{name}
+    </select>
+
+    <select id="selectAllCategories" resultMap="CategoryResultMap">
+        SELECT <include refid="categoryColumns"/>
+        FROM categories
+        ORDER BY display_order ASC, created_at DESC
+    </select>
+
+    <select id="selectActiveCategories" resultMap="CategoryResultMap">
+        SELECT <include refid="categoryColumns"/>
+        FROM categories
+        WHERE is_active = true
+        ORDER BY display_order ASC, created_at DESC
+    </select>
+
+    <select id="selectCategoriesOrderByDisplayOrder" resultMap="CategoryResultMap">
+        SELECT <include refid="categoryColumns"/>
+        FROM categories
+        ORDER BY display_order ASC
+    </select>
+
+    <select id="countAllCategories" resultType="int">
+        SELECT COUNT(*)
+        FROM categories
+    </select>
+
+    <select id="countActiveCategories" resultType="int">
+        SELECT COUNT(*)
+        FROM categories
+        WHERE is_active = true
+    </select>
+
+    <select id="existsByName" parameterType="String" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM categories
+        WHERE name = #{name}
+    </select>
+
+    <select id="existsByNameAndNotId" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM categories
+        WHERE name = #{name} AND id != #{id}
+    </select>
+
+    <!-- Update -->
+    <update id="updateCategory" parameterType="Category">
+        UPDATE categories
+        SET name = #{name},
+            description = #{description},
+            display_order = #{displayOrder},
+            is_active = #{isActive},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateCategoryName">
+        UPDATE categories
+        SET name = #{name},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateCategoryDescription">
+        UPDATE categories
+        SET description = #{description},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateCategoryDisplayOrder">
+        UPDATE categories
+        SET display_order = #{displayOrder},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateCategoryStatus">
+        UPDATE categories
+        SET is_active = #{isActive},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- Delete -->
+    <delete id="deleteCategoryById" parameterType="Long">
+        DELETE FROM categories
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteAllCategories">
+        DELETE FROM categories
+    </delete>
+
+    <!-- Business methods -->
+    <select id="getMaxDisplayOrder" resultType="int">
+        SELECT COALESCE(MAX(display_order), 0)
+        FROM categories
+    </select>
+
+    <select id="selectCategoriesWithArticleCount" resultMap="CategoryWithArticleCountResultMap">
+        SELECT c.id, c.name, c.description, c.display_order, c.is_active, 
+               c.created_at, c.updated_at,
+               COUNT(a.id) as article_count
+        FROM categories c
+        LEFT JOIN articles a ON c.id = a.category_id
+        GROUP BY c.id, c.name, c.description, c.display_order, c.is_active, c.created_at, c.updated_at
+        ORDER BY c.display_order ASC, c.created_at DESC
+    </select>
+
+</mapper>

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.handong.internationalmedia.dao.StudentDao">
+
+    <!-- Result Map -->
+    <resultMap id="StudentResultMap" type="Student">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="email" column="email"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- SQL Fragments -->
+    <sql id="studentColumns">
+        id, name, email, created_at, updated_at
+    </sql>
+
+    <sql id="studentInsertColumns">
+        name, email, created_at, updated_at
+    </sql>
+
+    <!-- Create -->
+    <insert id="insertStudent" parameterType="Student" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO students (<include refid="studentInsertColumns"/>)
+        VALUES (#{name}, #{email}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <!-- Read -->
+    <select id="selectStudentById" parameterType="Long" resultMap="StudentResultMap">
+        SELECT <include refid="studentColumns"/>
+        FROM students
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectAllStudents" resultMap="StudentResultMap">
+        SELECT <include refid="studentColumns"/>
+        FROM students
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectStudentsByName" parameterType="String" resultMap="StudentResultMap">
+        SELECT <include refid="studentColumns"/>
+        FROM students
+        WHERE name LIKE CONCAT('%', #{name}, '%')
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectStudentsByEmail" parameterType="String" resultMap="StudentResultMap">
+        SELECT <include refid="studentColumns"/>
+        FROM students
+        WHERE email LIKE CONCAT('%', #{email}, '%')
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectStudentsWithPaging" resultMap="StudentResultMap">
+        SELECT <include refid="studentColumns"/>
+        FROM students
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countAllStudents" resultType="int">
+        SELECT COUNT(*)
+        FROM students
+    </select>
+
+    <select id="countStudentsByName" parameterType="String" resultType="int">
+        SELECT COUNT(*)
+        FROM students
+        WHERE name LIKE CONCAT('%', #{name}, '%')
+    </select>
+
+    <select id="existsByEmail" parameterType="String" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM students
+        WHERE email = #{email}
+    </select>
+
+    <select id="existsByEmailAndNotId" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM students
+        WHERE email = #{email} AND id != #{id}
+    </select>
+
+    <!-- Update -->
+    <update id="updateStudent" parameterType="Student">
+        UPDATE students
+        SET name = #{name},
+            email = #{email},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStudentName">
+        UPDATE students
+        SET name = #{name},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStudentEmail">
+        UPDATE students
+        SET email = #{email},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- Delete -->
+    <delete id="deleteStudentById" parameterType="Long">
+        DELETE FROM students
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteAllStudents">
+        DELETE FROM students
+    </delete>
+
+    <!-- Search -->
+    <select id="searchStudents" parameterType="String" resultMap="StudentResultMap">
+        SELECT <include refid="studentColumns"/>
+        FROM students
+        WHERE name LIKE CONCAT('%', #{keyword}, '%')
+           OR email LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="searchStudentsWithPaging" resultMap="StudentResultMap">
+        SELECT <include refid="studentColumns"/>
+        FROM students
+        WHERE name LIKE CONCAT('%', #{keyword}, '%')
+           OR email LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countSearchResults" parameterType="String" resultType="int">
+        SELECT COUNT(*)
+        FROM students
+        WHERE name LIKE CONCAT('%', #{keyword}, '%')
+           OR email LIKE CONCAT('%', #{keyword}, '%')
+    </select>
+
+</mapper>

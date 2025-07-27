@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.handong.internationalmedia.dao.ArticleDao">
+
+    <!-- Result Map -->
+    <resultMap id="ArticleResultMap" type="Article">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="summary" column="summary"/>
+        <result property="author" column="author"/>
+        <result property="featuredImage" column="featured_image"/>
+        <result property="readTime" column="read_time"/>
+        <result property="viewCount" column="view_count"/>
+        <result property="isFeatured" column="is_featured"/>
+        <result property="isPublished" column="is_published"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <resultMap id="ArticleWithCategoryResultMap" type="Article">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="summary" column="summary"/>
+        <result property="author" column="author"/>
+        <result property="featuredImage" column="featured_image"/>
+        <result property="readTime" column="read_time"/>
+        <result property="viewCount" column="view_count"/>
+        <result property="isFeatured" column="is_featured"/>
+        <result property="isPublished" column="is_published"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <association property="category" javaType="Category">
+            <id property="id" column="category_id"/>
+            <result property="name" column="category_name"/>
+            <result property="description" column="category_description"/>
+        </association>
+    </resultMap>
+
+    <!-- SQL Fragments -->
+    <sql id="articleColumns">
+        id, title, content, summary, author, featured_image, read_time, 
+        view_count, is_featured, is_published, category_id, created_at, updated_at
+    </sql>
+
+    <sql id="articleInsertColumns">
+        title, content, summary, author, featured_image, read_time, 
+        view_count, is_featured, is_published, category_id, created_at, updated_at
+    </sql>
+
+    <sql id="articleWithCategoryColumns">
+        a.id, a.title, a.content, a.summary, a.author, a.featured_image, a.read_time,
+        a.view_count, a.is_featured, a.is_published, a.category_id, a.created_at, a.updated_at,
+        c.name as category_name, c.description as category_description
+    </sql>
+
+    <!-- Create -->
+    <insert id="insertArticle" parameterType="Article" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO articles (<include refid="articleInsertColumns"/>)
+        VALUES (#{title}, #{content}, #{summary}, #{author}, #{featuredImage}, #{readTime},
+                #{viewCount}, #{isFeatured}, #{isPublished}, #{categoryId}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <!-- Read -->
+    <select id="selectArticleById" parameterType="Long" resultMap="ArticleResultMap">
+        SELECT <include refid="articleColumns"/>
+        FROM articles
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectArticleWithCategory" parameterType="Long" resultMap="ArticleWithCategoryResultMap">
+        SELECT <include refid="articleWithCategoryColumns"/>
+        FROM articles a
+        LEFT JOIN categories c ON a.category_id = c.id
+        WHERE a.id = #{id}
+    </select>
+
+    <select id="selectAllArticles" resultMap="ArticleResultMap">
+        SELECT <include refid="articleColumns"/>
+        FROM articles
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectAllArticlesWithCategory" resultMap="ArticleWithCategoryResultMap">
+        SELECT <include refid="articleWithCategoryColumns"/>
+        FROM articles a
+        LEFT JOIN categories c ON a.category_id = c.id
+        ORDER BY a.created_at DESC
+    </select>
+
+    <select id="selectPublishedArticles" resultMap="ArticleResultMap">
+        SELECT <include refid="articleColumns"/>
+        FROM articles
+        WHERE is_published = true
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectFeaturedArticles" resultMap="ArticleResultMap">
+        SELECT <include refid="articleColumns"/>
+        FROM articles
+        WHERE is_featured = true AND is_published = true
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectArticlesByCategory" parameterType="Long" resultMap="ArticleResultMap">
+        SELECT <include refid="articleColumns"/>
+        FROM articles
+        WHERE category_id = #{categoryId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectArticlesByAuthor" parameterType="String" resultMap="ArticleResultMap">
+        SELECT <include refid="articleColumns"/>
+        FROM articles
+        WHERE author = #{author}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectArticlesWithPaging" resultMap="ArticleResultMap">
+        SELECT <include refid="articleColumns"/>
+        FROM articles
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="selectPublishedArticlesWithPaging" resultMap="ArticleResultMap">
+        SELECT <include refid="articleColumns"/>
+        FROM articles
+        WHERE is_published = true
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="selectArticlesByCategoryWithPaging" resultMap="ArticleResultMap">
+        SELECT <include refid="articleColumns"/>
+        FROM articles
+        WHERE category_id = #{categoryId}
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- Count -->
+    <select id="countAllArticles" resultType="int">
+        SELECT COUNT(*)
+        FROM articles
+    </select>
+
+    <select id="countPublishedArticles" resultType="int">
+        SELECT COUNT(*)
+        FROM articles
+        WHERE is_published = true
+    </select>
+
+    <select id="countFeaturedArticles" resultType="int">
+        SELECT COUNT(*)
+        FROM articles
+        WHERE is_featured = true AND is_published = true
+    </select>
+
+    <select id="countArticlesByCategory" parameterType="Long" resultType="int">
+        SELECT COUNT(*)
+        FROM articles
+        WHERE category_id = #{categoryId}
+    </select>
+
+    <select id="countArticlesByAuthor" parameterType="String" resultType="int">
+        SELECT COUNT(*)
+        FROM articles
+        WHERE author = #{author}
+    </select>
+
+    <!-- Update -->
+    <update id="updateArticle" parameterType="Article">
+        UPDATE articles
+        SET title = #{title},
+            content = #{content},
+            summary = #{summary},
+            author = #{author},
+            featured_image = #{featuredImage},
+            read_time = #{readTime},
+            view_count = #{viewCount},
+            is_featured = #{isFeatured},
+            is_published = #{isPublished},
+            category_id = #{categoryId},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateArticleTitle">
+        UPDATE articles
+        SET title = #{title},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateArticleContent">
+        UPDATE articles
+        SET content = #{content},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateArticleSummary">
+        UPDATE articles
+        SET summary = #{summary},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateArticleCategory">
+        UPDATE articles
+        SET category_id = #{categoryId},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateArticlePublishStatus">
+        UPDATE articles
+        SET is_published = #{isPublished},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateArticleFeaturedStatus">
+        UPDATE articles
+        SET is_featured = #{isFeatured},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="incrementViewCount">
+        UPDATE articles
+        SET view_count = view_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- Delete -->
+    <delete id="deleteArticleById" parameterType="Long">
+        DELETE FROM articles
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteArticlesByCategory" parameterType="Long">
+        DELETE FROM articles
+        WHERE category_id = #{categoryId}
+    </delete>
+
+    <delete id="deleteAllArticles">
+        DELETE FROM articles
+    </delete>
+
+    <!-- Search -->
+    <select id="searchArticles" parameterType="String" resultMap="ArticleResultMap">
+        SELECT <include refid="articleColumns"/>
+        FROM articles
+        WHERE title LIKE CONCAT('%', #{keyword}, '%')
+           OR content LIKE CONCAT('%', #{keyword}, '%')
+           OR author LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="searchPublishedArticles" parameterType="String" resultMap="ArticleResultMap">
+        SELECT <include refid="articleColumns"/>
+        FROM articles
+        WHERE (title LIKE CONCAT('%', #{keyword}, '%')
+           OR content LIKE CONCAT('%', #{keyword}, '%')
+           OR author LIKE CONCAT('%', #{keyword}, '%'))
+           AND is_published = true
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="searchArticlesWithPaging" resultMap="ArticleResultMap">
+        SELECT <include refid="articleColumns"/>
+        FROM articles
+        WHERE title LIKE CONCAT('%', #{keyword}, '%')
+           OR content LIKE CONCAT('%', #{keyword}, '%')
+           OR author LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="searchPublishedArticlesWithPaging" resultMap="ArticleResultMap">
+        SELECT <include refid="articleColumns"/>
+        FROM articles
+        WHERE (title LIKE CONCAT('%', #{keyword}, '%')
+           OR content LIKE CONCAT('%', #{keyword}, '%')
+           OR author LIKE CONCAT('%', #{keyword}, '%'))
+           AND is_published = true
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countSearchResults" parameterType="String" resultType="int">
+        SELECT COUNT(*)
+        FROM articles
+        WHERE title LIKE CONCAT('%', #{keyword}, '%')
+           OR content LIKE CONCAT('%', #{keyword}, '%')
+           OR author LIKE CONCAT('%', #{keyword}, '%')
+    </select>
+
+    <select id="countPublishedSearchResults" parameterType="String" resultType="int">
+        SELECT COUNT(*)
+        FROM articles
+        WHERE (title LIKE CONCAT('%', #{keyword}, '%')
+           OR content LIKE CONCAT('%', #{keyword}, '%')
+           OR author LIKE CONCAT('%', #{keyword}, '%'))
+           AND is_published = true
+    </select>
+
+    <!-- Business methods -->
+    <select id="selectRecentArticles" parameterType="int" resultMap="ArticleResultMap">
+        SELECT <include refid="articleColumns"/>
+        FROM articles
+        WHERE is_published = true
+        ORDER BY created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectPopularArticles" parameterType="int" resultMap="ArticleResultMap">
+        SELECT <include refid="articleColumns"/>
+        FROM articles
+        WHERE is_published = true
+        ORDER BY view_count DESC, created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectDistinctAuthors" resultType="String">
+        SELECT DISTINCT author
+        FROM articles
+        WHERE author IS NOT NULL
+        ORDER BY author ASC
+    </select>
+
+</mapper>

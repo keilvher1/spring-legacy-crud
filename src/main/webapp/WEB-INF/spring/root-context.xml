@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context 
+                           http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/tx 
+                           http://www.springframework.org/schema/tx/spring-tx.xsd
+                           http://mybatis.org/schema/mybatis-spring 
+                           http://mybatis.org/schema/mybatis-spring.xsd">
+	
+    <!-- Enable component scanning for service and DAO packages -->
+    <context:component-scan base-package="com.handong.internationalmedia.service" />
+    <context:component-scan base-package="com.handong.internationalmedia.dao" />
+
+    <!-- H2 DataSource Configuration (for easy testing) -->
+    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="org.h2.Driver" />
+        <property name="url" value="jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL;DATABASE_TO_LOWER=TRUE" />
+        <property name="username" value="sa" />
+        <property name="password" value="" />
+        <property name="initialSize" value="5" />
+        <property name="maxTotal" value="20" />
+        <property name="testOnBorrow" value="true" />
+        <property name="validationQuery" value="SELECT 1" />
+    </bean>
+
+    <!-- MyBatis Configuration -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <property name="mapperLocations" value="classpath:mappers/**/*.xml" />
+        <property name="typeAliasesPackage" value="com.handong.internationalmedia.model" />
+        <property name="configuration">
+            <bean class="org.apache.ibatis.session.Configuration">
+                <property name="mapUnderscoreToCamelCase" value="true"/>
+                <property name="cacheEnabled" value="true"/>
+                <property name="lazyLoadingEnabled" value="true"/>
+                <property name="aggressiveLazyLoading" value="false"/>
+            </bean>
+        </property>
+    </bean>
+
+    <!-- MyBatis Mapper Scanner -->
+    <mybatis-spring:scan base-package="com.handong.internationalmedia.dao" />
+
+    <!-- Transaction Manager -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <!-- Enable Transaction Annotations -->
+    <tx:annotation-driven transaction-manager="transactionManager" />
+
+    <!-- Initialize Database -->
+    <bean id="dataSourceInitializer" class="org.springframework.jdbc.datasource.init.DataSourceInitializer">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="databasePopulator">
+            <bean class="org.springframework.jdbc.datasource.init.CompositeDatabasePopulator">
+                <property name="populators">
+                    <list>
+                        <bean class="org.springframework.jdbc.datasource.init.ResourceDatabasePopulator">
+                            <property name="scripts">
+                                <list>
+                                    <value>classpath:schema.sql</value>
+                                    <value>classpath:data.sql</value>
+                                </list>
+                            </property>
+                            <property name="continueOnError" value="true"/>
+                            <property name="ignoreFailedDrops" value="true"/>
+                        </bean>
+                    </list>
+                </property>
+            </bean>
+        </property>
+    </bean>
+
+</beans>
